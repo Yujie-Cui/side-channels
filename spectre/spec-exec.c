@@ -50,8 +50,9 @@ void victim(int idx) {
 int main(int argc, char* argv[]) {
 	
 	register uint64_t start, total_cycles; // cycle timestamps
-	volatile uint8_t* addr; // pointer to a byte	
-	unsigned int junk = 0;
+	//volatile uint8_t* addr; // pointer to a byte	
+	uint8_t* addr; // pointer to a byte	
+	//unsigned int junk = 0;
 
 	// initialize probe_array ; need this step to see timing differences for some reason... porque?
 	for(int i=0; i<ARRAY_SIZE; i++) {

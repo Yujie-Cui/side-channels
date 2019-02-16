@@ -1,9 +1,10 @@
 CC=gcc
 CFLAGS=-Wall -march=native
+DEPS=utils.h
 
-all: cache-time flush-reload flush-prefetch spec-exec spectre
+all: cache-time flush-reload flush-prefetch spec-exec spectre bpoison
 
-%.o: %.c
+%.o: %.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 cache-time: cache-time.o
@@ -21,5 +22,8 @@ spec-exec: spec-exec.o
 spectre: spectre.o
 	$(CC) spectre.o $(CFLAGS) -o spectre
 
+bpoison: bpoison.o utils.o
+	$(CC) bpoison.o utils.o $(CFLAGS) -no-pie -g -o bpoison
+
 clean:
-	rm *.o cache-time flush-reload flush-prefetch spec-exec spectre
+	rm *.o cache-time flush-reload flush-prefetch spec-exec spectre bpoison
