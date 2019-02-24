@@ -17,8 +17,8 @@
 
 int buffer_size = 10;
 uint8_t buffer[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-char* secret = "Amo amare amavi amatus";
-uint8_t probe_array[ARRAY_SIZE * PAGE_SIZE + DELTA];
+char* secret = "A";
+uint8_t probe_array[ARRAY_SIZE * PAGE_SIZE];
 uint8_t temp = 0;
 int size = 10;
 
@@ -113,7 +113,7 @@ int main(int argc, char* argv[]) {
 			}
 		}
 
-		printf("Guess = %c (%i) \n", improved_guess, improved_guess);
+		printf("Guess = %c (%i) (score %i)\n", improved_guess, improved_guess, scores[improved_guess]);
 	} // c ; end
 	
 	return 0;

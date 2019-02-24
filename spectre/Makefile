@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-Wall -march=native -O0 -g
+CFLAGS=-Wall -march=native -O0
 DEPS=utils.h
 
 all: cache-time flush-reload flush-prefetch spec-exec spectre bpoison bpoison2 histogram
@@ -29,7 +29,7 @@ bpoison2: bpoison2.o utils.o
 	$(CC) bpoison2.o utils.o $(CFLAGS) -no-pie -g -o bpoison2
 
 histogram: histogram.o
-	$(CC) histogram.o $(CFLAGS) -no-pie -g -o histogram
+	$(CC) histogram.o $(CFLAGS) -o histogram
 
 clean:
 	rm *.o cache-time flush-reload flush-prefetch spec-exec spectre bpoison bpoison2 histogram
