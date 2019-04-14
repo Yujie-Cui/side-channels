@@ -13,11 +13,12 @@
 #define PAGE_SIZE 4096 // elements in probe_array should be PAGE_SIZE bytes apart to ensure they occupy different cache lines
 #define DELTA 1024
 #define CACHE_HIT_PREFETCH_THRESHOLD 150
-#define ITER_N 1
+#define ITER_N 100
 
 uint8_t probe_array[ARRAY_SIZE * PAGE_SIZE];
 uint8_t temp = 0;
 int size = 100;
+int correct_value = 99;
 
 void flush() {
 	for(int i=0; i<ARRAY_SIZE; i++) {
@@ -45,7 +46,8 @@ void clflush(void* p) {
 void victim(int idx) {
 	if(idx < size) {
 		//temp = probe_array[idx * PAGE_SIZE + DELTA];
-		probe_array[idx * PAGE_SIZE + DELTA] = 1;
+		//probe_array[idx * PAGE_SIZE + DELTA] = 1;
+		temp = probe_array[idx * PAGE_SIZE + DELTA];
 	}
 }
 
@@ -61,7 +63,7 @@ int main(int argc, char* argv[]) {
 	FILE* fd;
 	if(ITER_N == 1) {
 		fd = fopen("mistrain.csv", "w");
-		if(!fd) return;
+		if(!fd) return 1;
 		fprintf(fd, "index,cycles\n");
 	}
 
@@ -85,7 +87,7 @@ int main(int argc, char* argv[]) {
 		//}
 		
 		// speculatively execute the taken branch, even if index is out of bounds	
-		victim(17);
+		victim(correct_value);
 
 		// measure the clflush() instruction for each element
 		for(int i=0; i<ARRAY_SIZE; i++) {
@@ -103,7 +105,7 @@ int main(int argc, char* argv[]) {
 			printf("Access time probe_array[%-3i]: %d cycles\n", i, (int)total_cycles);
 			if(ITER_N == 1) fprintf(fd, "%i,%i\n", i, (int)total_cycles);
 		}
-		if(guess == 17) correct++;
+		if(guess == correct_value) correct++;
 		//printf("guess %i\n", guess);
 	}
 	printf("%i/%i correct (%.2f%%)\n", correct, ITER_N, (float)correct/ITER_N * 100);

