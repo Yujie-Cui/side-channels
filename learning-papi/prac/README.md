@@ -13,4 +13,10 @@ I saved my output to: `ALL_PRESET_EVENTS.out`
 There is also a [Present Events Table](http://icl.cs.utk.edu/projects/papi/presets.html) online, but it may not be up-to-date.
 
 ## Issues
-1. [User Guide](http://icl.cs.utk.edu/projects/papi/files/documentation/PAPI_USER_GUIDE.htm#C_AND_FORTRAN_CALLING_INTERFACES) calls the struct `PAPI_preset_info_t`, which does not exist... I changed it to `PAPI_event_info_t`, which compiles, but now it fails to get `PAPI_TOT_INS` event...
+1. [User Guide](http://icl.cs.utk.edu/projects/papi/files/documentation/PAPI_USER_GUIDE.htm#C_AND_FORTRAN_CALLING_INTERFACES) calls the struct `PAPI_preset_info_t`, which does not exist... I changed it to `PAPI_event_info_t`, which compiles, ~~but now it fails to get `PAPI_TOT_INS` event...~~ and works (see Issue 2).
+
+2. Events can't read if `perf_event` is disabled (`paranoid=3`) by Linux. To enable, run:
+```
+sudo sh -c 'echo -1 >/proc/sys/kernel/perf_event_paranoid'
+```
+[Source](https://stackoverflow.com/questions/32308175/papi-avail-no-events-available)
