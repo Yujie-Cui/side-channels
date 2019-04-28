@@ -1,6 +1,6 @@
 # Learning How to Use PAPI
 
-## Install PAPI
+## Installing PAPI
 [Downloading and Installing PAPI](http://icl.utk.edu/papi/software/)
 1. Clone the repository
 ```
@@ -18,9 +18,22 @@ cd papi/src
 make
 ```
 
+4. Install PAPI
+```
+sudo make install-all
+```
+
+## Compiling C Programs Using PAPI Library
+1. Add `#include <papi.h>` to `test.c` file, where `test.c` is the program to compile
+
+2. Run the following command to compile `test.c`:
+```
+gcc -I/usr/local/include -O0 test.c /usr/local/lib/libpapi.a -o test 
+```
+
 ## Directories
 1. `papi` contains the PAPI library and binaries
-2. `src` contains practice code
+2. `prac` contains my practice code
 
 ## Resources
 [PAPI User's Guide](http://icl.cs.utk.edu/projects/papi/files/documentation/PAPI_USER_GUIDE.htm#INTRODUCTION_TO_PAPI)
