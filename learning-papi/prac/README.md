@@ -24,3 +24,12 @@ sudo sh -c 'echo -1 >/proc/sys/kernel/perf_event_paranoid'
 3. I have no idea what `NATIVE_MASK` is in the examples in the User Guide...
 
 4. This compiler warning: `gcc: warning: /usr/local/lib/libpapi.a: linker input file unused because linking not done`
+
+5. Undefined references...
+```
+hAPI.c:(.text+0x24): undefined reference to `PAPI_num_counters'
+hAPI.c:(.text+0x74): undefined reference to `PAPI_start_counters'
+hAPI.c:(.text+0xac): undefined reference to `PAPI_read_counters'
+hAPI.c:(.text+0xfc): undefined reference to `PAPI_accum_counters'
+hAPI.c:(.text+0x136): undefined reference to `PAPI_stop_counters'
+```
