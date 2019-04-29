@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <papi.h>
 
+// General test to see if library works and event exists
+
 int main() {
 
     printf("Ich lerne uber PAPI\n");
