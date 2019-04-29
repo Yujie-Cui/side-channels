@@ -1,11 +1,8 @@
 # Learning How to Use PAPI
 
 ## Installing PAPI
-[Downloading and Installing PAPI](http://icl.utk.edu/papi/software/)
-1. Clone the repository
-```
-git clone https://bitbucket.org/icl/papi.git
-```
+1. Download the latest `papi-.tar.gz` from here (scroll down the web page): [Downloading and Installing PAPI](http://icl.utk.edu/papi/software/)
+(cloning the git respository gave me undefined errors ; it's probably not up-to-date).
 
 2. Go to `papi/src` directory
 ```
@@ -32,8 +29,7 @@ gcc -I/usr/local/include -O0 test.c /usr/local/lib/libpapi.a -o test
 ```
 
 ## Directories
-1. `papi` contains the PAPI library and binaries (after Installing PAPI)
-2. `prac` contains my practice code
+1. `prac` contains my practice code
 
 ## Resources
 * [PAPI User's Guide](http://icl.cs.utk.edu/projects/papi/files/documentation/PAPI_USER_GUIDE.htm#INTRODUCTION_TO_PAPI)

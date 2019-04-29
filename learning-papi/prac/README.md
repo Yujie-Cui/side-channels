@@ -33,3 +33,4 @@ hAPI.c:(.text+0xac): undefined reference to `PAPI_read_counters'
 hAPI.c:(.text+0xfc): undefined reference to `PAPI_accum_counters'
 hAPI.c:(.text+0x136): undefined reference to `PAPI_stop_counters'
 ```
+Solution: Don't clone the git respository shown on the [PAPI Software Page](http://icl.utk.edu/papi/software/). Instead scroll down and download the latest `papi-.tar.gz` and build PAPI from the downloaded directory.

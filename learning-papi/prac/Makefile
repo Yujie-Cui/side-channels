@@ -1,6 +1,7 @@
 CC=gcc
 CFLAGS=-Wall -O0 
-IDIR=-I/usr/local/include
+#IDIR=-I/usr/local/include
+IDIR=-I/home/atsuko/side-channels/learning-papi/papi/src 
 LIBS=/usr/local/lib/libpapi.a
 
 all: p1 hAPI 
