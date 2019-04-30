@@ -2,6 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <signal.h>
+#include <sys/wait.h>
 #include <papi.h>
 
 #include "profile.h"
@@ -12,6 +16,13 @@
 
 int parse_config(char* filename, profile_t** profiles);
 void print_profiles(profile_t* profiles, int num_profiles);
+
+// signal handler ; lets child know that the child can start exec()
+void sig_events_set(int sig) {
+    if(sig == SIGUSR1) {
+        printf("pid=%i: recieved signal!\n", getpid());
+    }
+}
 
 int main(int argc, char* argv[]) {
 
@@ -24,28 +35,86 @@ int main(int argc, char* argv[]) {
     int num_profiles = parse_config(argv[1], &profiles);
     print_profiles(profiles, num_profiles);
 
-    //int EventSet = PAPI_NULL;
-    //long long values[NUM_EVENTS];
-    //
-    //// initialize PAPI library
-    //int ret = PAPI_library_init(PAPI_VER_CURRENT);
-    //if(ret != PAPI_VER_CURRENT) {
-    //    printf("Failed to initialize PAPI library.\n");
-    //    return 1;
-    //}
+    int EventSet = PAPI_NULL;
+    
+    // initialize PAPI library
+    int ret = PAPI_library_init(PAPI_VER_CURRENT);
+    if(ret != PAPI_VER_CURRENT) {
+        printf("Failed to initialize PAPI library.\n");
+        return 1;
+    }
 
-    //// create an EventSet
-    //if(PAPI_create_eventset(&EventSet) != PAPI_OK) {
-    //    printf("Failed to create an EventSet.\n");
-    //    return 1;
-    //} 
+    // create an EventSet
+    if(PAPI_create_eventset(&EventSet) != PAPI_OK) {
+        printf("Failed to create an EventSet.\n");
+        return 1;
+    } 
 
-    //// add events to EventSet
-    //ret = PAPI_add_events(EventSet, events, NUM_EVENTS);
-    //if(ret != PAPI_OK) {
-    //    printf("Failed to add events to EventSet. %i\n", ret);
-    //    return 1;
-    //}
+    // add events to EventSet
+    ret = PAPI_add_events(EventSet, events, NUM_EVENTS);
+    if(ret != PAPI_OK) {
+        printf("Failed to add events to EventSet. %i\n", ret);
+        return 1;
+    }
+
+    // set signal handler
+    signal(SIGUSR1, sig_events_set);
+    int status = 0; // status of child process
+    pid_t wpid; // return value of waitpid()
+
+    // fork and profile each thread
+    for(int i=0; i<num_profiles; i++) {
+        profile_t* p = &profiles[i];
+        pid_t pid;
+        printf("%i: %s\n", i, p->argv[0]);
+
+        if(( pid = fork()) == -1) {
+            perror("Fork error.\n");
+            return 1;
+        }
+
+        // child process
+        if(pid == 0) { 
+            // wait until events are attached 
+            pause();    
+            // execute command line args
+            printf("pid=%i: I got here! Imma exit now.\n", getpid());
+            exit(0);
+        } else { // parent process ; responsible for attaching HPC events to thread
+            // attach events to forked process
+            ret = PAPI_attach(EventSet, pid);
+            if(ret != PAPI_OK) {
+                printf("pid=%i: Failed to attach events to thread %i. %i\n", getpid(), pid, ret);
+                // add an error handler
+                break;
+            }
+            // send signal to child ; ready to execute
+            ret = kill(pid, SIGUSR1);
+            if(ret < 0) {
+                printf("Failed to send signal to child %i\n", pid);
+            } else {
+                printf("pid=%i: Successfully sent signal to child %i\n", getpid(), pid);
+            }
+
+            // wait for child to complete
+            while( (wpid = waitpid(pid, &status, WUNTRACED)) > 0) {
+                if(wpid == pid) break; 
+            }
+            if(wpid < 0) {
+                printf("Failed to wait for pid=%i\n", pid);
+            }
+
+            printf("pid=%i: Parent got here!\n", getpid());
+            
+            // detach events
+            ret = PAPI_detach(EventSet);
+            if(ret != PAPI_OK) {
+                printf("Failed to detach events from thread. %i\n", ret);
+            }
+
+        } // parent process ; end
+
+    } // for each profile ; end
  
     //if(PAPI_start(EventSet) != PAPI_OK) {
     //    printf("Failed to start counting\n");
@@ -82,14 +151,14 @@ int parse_config(char* filename, profile_t** profiles) {
     }
 
     // get number of threads to profile
-    int num_threads = 0;
+    int num_profiles = 0;
     for(char c=getc(config); c!=EOF; c=getc(config)) {
         if (c == '\n') {
-            num_threads++;
+            num_profiles++;
         }
     }  
     assert(*profiles == NULL);
-    *profiles = (profile_t*) malloc(num_threads * sizeof(profile_t));
+    *profiles = (profile_t*) malloc(num_profiles * sizeof(profile_t));
    
     // go to beginning of file
     rewind(config);
@@ -117,8 +186,8 @@ int parse_config(char* filename, profile_t** profiles) {
     } // while reading config ; end
     fclose(config);
 
-    assert(num_threads == thread_id); 
-    return num_threads;    
+    assert(num_profiles == thread_id); 
+    return num_profiles;    
 }
 
 void print_profiles(profile_t* profiles, int num_profiles) {
