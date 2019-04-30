@@ -1,0 +1,18 @@
+CC=gcc
+CFLAGS=-Wall -O0 -g 
+IDIR=-I/usr/local/include
+LIBS=/usr/local/lib/libpapi.a
+
+all: test profiler
+
+%.o: %.c 
+	$(CC) $(IDIR) $(LIBS) -c -o $@ $< $(CFLAGS)
+
+test: test.o
+	$(CC) test.o $(CFLAGS) -o test
+
+profiler: profiler.o
+	$(CC) $(IDIR) profiler.o $(LIBS) $(CFLAGS) -o profiler
+
+clean:
+	rm *.o test profiler

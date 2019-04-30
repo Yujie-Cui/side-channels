@@ -8,21 +8,17 @@
 #include <sys/wait.h>
 #include <papi.h>
 
-#include "profile.h"
+#include "profiler.h"
 
 /*
-    Profile HPC data of thread
+    Profile HPC data of process
 */
+
+// signal handler ; lets child know that the child can start exec()
+void sig_events_set(int sig);
 
 int parse_config(char* filename, profile_t** profiles);
 void print_profiles(profile_t* profiles, int num_profiles);
-
-// signal handler ; lets child know that the child can start exec()
-void sig_events_set(int sig) {
-    if(sig == SIGUSR1) {
-        printf("pid=%i: recieved signal!\n", getpid());
-    }
-}
 
 int main(int argc, char* argv[]) {
 
@@ -59,35 +55,46 @@ int main(int argc, char* argv[]) {
 
     // set signal handler
     signal(SIGUSR1, sig_events_set);
-    int status = 0; // status of child process
-    pid_t wpid; // return value of waitpid()
 
-    // fork and profile each thread
+    // fork and profile each process
     for(int i=0; i<num_profiles; i++) {
+        
+        // reset counters
+        ret = PAPI_reset(EventSet);
+        if(ret != PAPI_OK) {
+            printf("Failed to reset counters for iter %i\n", i);
+        }
+
         profile_t* p = &profiles[i];
-        pid_t pid;
+        pid_t pid, wpid;
+        int status = 0;
         printf("%i: %s\n", i, p->argv[0]);
 
-        if(( pid = fork()) == -1) {
+        pid = fork();
+        
+        if(pid < 0) {
             perror("Fork error.\n");
             return 1;
         }
-
-        // child process
-        if(pid == 0) { 
-            // wait until events are attached 
-            pause();    
-            // execute command line args
-            printf("pid=%i: I got here! Imma exit now.\n", getpid());
-            exit(0);
-        } else { // parent process ; responsible for attaching HPC events to thread
+        else if(pid == 0) { // child process
+            pause(); // wait until events are attached 
+            ret = execve(p->argv[0], p->argv, NULL); // execute command line args
+            printf("Should not get here... execve() error occurred.\n");
+        } else { // parent process ; responsible for attaching HPC events to process
             // attach events to forked process
             ret = PAPI_attach(EventSet, pid);
             if(ret != PAPI_OK) {
-                printf("pid=%i: Failed to attach events to thread %i. %i\n", getpid(), pid, ret);
+                printf("pid=%i: Failed to attach events to process %i. %i\n", getpid(), pid, ret);
                 // add an error handler
                 break;
             }
+
+            // start counting 
+            if(PAPI_start(EventSet) != PAPI_OK) {
+                printf("Failed to start counting\n");
+                return 1;
+            }
+
             // send signal to child ; ready to execute
             ret = kill(pid, SIGUSR1);
             if(ret < 0) {
@@ -103,46 +110,42 @@ int main(int argc, char* argv[]) {
             if(wpid < 0) {
                 printf("Failed to wait for pid=%i\n", pid);
             }
-
-            printf("pid=%i: Parent got here!\n", getpid());
             
+            // read values
+            if(PAPI_read(EventSet, p->values) != PAPI_OK) {
+                printf("Failed to read counters.\n");
+                return 1;
+            } 
+            // stop counters
+            if(PAPI_stop(EventSet, p->values) != PAPI_OK) {
+                printf("Failed to stop counters.\n");
+                return 1;
+            }
+ 
             // detach events
             ret = PAPI_detach(EventSet);
             if(ret != PAPI_OK) {
-                printf("Failed to detach events from thread. %i\n", ret);
+                printf("Failed to detach events from process. %i\n", ret);
             }
+        
+            // print out statistics
+            printf("%25s %25s %25s\n", "Total insn", "Total L3 misses", "Total L3 accesses");
+            printf("%25llu %25llu %25llu\n", p->values[0], p->values[1], p->values[2]);
 
         } // parent process ; end
 
     } // for each profile ; end
- 
-    //if(PAPI_start(EventSet) != PAPI_OK) {
-    //    printf("Failed to start counting\n");
-    //    return 1;
-    //}
-
-    //// some computation here
-    //printf("Some computation here.\n");
-
-    //// read values
-    //if(PAPI_read(EventSet, values) != PAPI_OK) {
-    //    printf("Failed to read counters.\n");
-    //    return 1;
-    //} 
-
-    //// how do I read these values...? Like this?
-    //printf("%25s %25s %25s\n", "Total insn", "Total L3 misses", "Total L3 accesses");
-    //printf("%25llu %25llu %25llu\n", values[0], values[1], values[2]);
-
-    //if(PAPI_stop(EventSet, values) != PAPI_OK) {
-    //    printf("Failed to stop counters.\n");
-    //    return 1;
-    //}
 
     return 0;
 }
 
-// returns number of threads to profile
+void sig_events_set(int sig) {
+    if(sig == SIGUSR1) {
+        printf("pid=%i: recieved signal!\n", getpid());
+    }
+}
+
+// returns number of processs to profile
 int parse_config(char* filename, profile_t** profiles) {
     FILE* config = fopen(filename, "r");
     if(!config) {
@@ -150,7 +153,7 @@ int parse_config(char* filename, profile_t** profiles) {
         return 0;
     }
 
-    // get number of threads to profile
+    // get number of processs to profile
     int num_profiles = 0;
     for(char c=getc(config); c!=EOF; c=getc(config)) {
         if (c == '\n') {
@@ -164,14 +167,14 @@ int parse_config(char* filename, profile_t** profiles) {
     rewind(config);
 
     // parse config file
-    int thread_id = 0;
+    int process_id = 0;
     while(!feof(config)) {
         char* line = NULL;	
 		size_t n = 0;
 	
 		if(getline(&line, &n, config) > 0) {
             line[strcspn(line, "\r\n")] = 0; // remove the new line
-            profile_t* profile = &(*profiles)[thread_id];
+            profile_t* profile = &(*profiles)[process_id];
 
             profile->argv[0] = strtok(line, " "); // get first argument
             profile->argc = 0;
@@ -180,18 +183,18 @@ int parse_config(char* filename, profile_t** profiles) {
                 profile->argv[profile->argc] = strtok(NULL, " ");
             }
         
-            thread_id++;
+            process_id++;
         } // if getline() ; end
 
     } // while reading config ; end
     fclose(config);
 
-    assert(num_profiles == thread_id); 
+    assert(num_profiles == process_id); 
     return num_profiles;    
 }
 
 void print_profiles(profile_t* profiles, int num_profiles) {
-    printf("%i threads to profile:\n--\n", num_profiles);
+    printf("%i processs to profile:\n--\n", num_profiles);
     for(int i=0; i<num_profiles; i++) {
         printf("%i: ", i);
         profile_t* profile = &profiles[i];
