@@ -24,20 +24,23 @@ int main() {
     } 
 
     // Add event to EventSet
-    if(PAPI_add_event(EventSet, PAPI_TOT_INS) != PAPI_OK) {
-        printf("Failed to add PAPI_TOT_INS to EventSet.\n");
+    ret = PAPI_add_event(EventSet, PAPI_TOT_INS);
+    if(ret != PAPI_OK) {
+        printf("Failed to add PAPI_TOT_INS to EventSet. %i\n", ret);
         return 1;
     }
 
     // Try adding another event
-    if(PAPI_add_event(EventSet, PAPI_L3_TCM) != PAPI_OK) {
-        printf("Failed to add PAPI_L3_TCM to EventSet.\n");
+    ret = PAPI_add_event(EventSet, PAPI_L3_TCM);
+    if(ret != PAPI_OK) {
+        printf("Failed to add PAPI_L3_TCM to EventSet. %i\n", ret);
         return 1;
     }
 
     // ...and another event 
-    if(PAPI_add_event(EventSet, PAPI_L3_TCA) != PAPI_OK) {
-        printf("Failed to add PAPI_L3_TCA to EventSet.\n");
+    ret = PAPI_add_event(EventSet, PAPI_L3_TCA);
+    if(ret != PAPI_OK) {
+        printf("Failed to add PAPI_L3_TCA to EventSet. %i\n", ret);
         return 1;
     }
 
