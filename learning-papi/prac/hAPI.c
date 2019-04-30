@@ -6,7 +6,7 @@
     http://icl.cs.utk.edu/projects/papi/files/documentation/PAPI_USER_GUIDE.htm#HIGH_LEVEL_EXAMPLE
 */
 
-#define NUM_EVENTS 2
+#define NUM_EVENTS 1
 
 int main() {
 
@@ -15,9 +15,9 @@ int main() {
         printf("Failed to initialize counters.\n");
         return 1;
     }
-    printf("%i hardware counters available.\n");
+    printf("%i hardware counters available.\n", num_hw_counters);
  
-    int events[NUM_EVENTS] = {PAPI_TOT_INS, PAPI_TOT_CYC};
+    int events[NUM_EVENTS] = {PAPI_TOT_INS};
     long long values[NUM_EVENTS];
 
     // start counting events
@@ -34,9 +34,8 @@ int main() {
     }
 
     printf("Total insn: %llu\n", values[0]);
-    printf("Total cycles: %llu\n", values[1]);
 
-    // add to counters (? not sure what this does)
+    // add to counters (saves current count to array, then resets the counters
     if(PAPI_accum_counters(values, NUM_EVENTS) != PAPI_OK) {
         printf("Failed to add to counters.\n");
     }
