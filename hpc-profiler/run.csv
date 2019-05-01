@@ -1,9 +1,10 @@
 Max command args,256
-Sampling frequency (microsec),100000
-Total sample time per program (microsec),60000000
+Sampling frequency (microsec),10
+Total sample time per program (microsec),6000
 Max samples per program,600
 Number events,3
 Events,PAPI_TOT_INS,PAPI_L3_TCM,PAPI_L3_TCA,
-Number of programs,2
+Number of programs,3
 programs/spectre,
 programs/erik-spectre,
+/bin/ls,

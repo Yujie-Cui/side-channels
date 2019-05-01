@@ -7,6 +7,6 @@ To build all sample programs, run:
 make
 ```
 
-## Sample Programs Information
+## List of Sample Programs
 * `spectre.c`: My implementation of Spectre (using the SEED Lab)
 * `erik-spectre.c`: [This implementation](https://gist.github.com/ErikAugust/724d4a969fb2c6ae1bbd7b2a9e3d4bb6)

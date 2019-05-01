@@ -1,6 +1,6 @@
 CC=gcc
 CFLAGS=-Wall -march=native -O0
-DEPS=utils.h
+DEPS=
 
 all: spectre erik-spectre
 
