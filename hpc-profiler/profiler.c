@@ -112,22 +112,19 @@ int main(int argc, char* argv[]) {
             // sample until child finishes or MAX_SAMPLES is reached 
             p->num_samples = 0;
             while( (wpid = waitpid(pid, &status, WNOHANG)) >= 0 ) {
+                if(wpid == pid) break; // process completed
                 if(p->num_samples >= MAX_SAMPLES) { // maximum number of samples reached
-                    printf("Reached max samples %i. Stopping.\n", MAX_SAMPLES);
-                    kill(pid, SIGTERM); // terminate process
-                    sleep(2);
-                    kill(pid, SIGKILL);
                     continue;
                 }
                 // else keep sampling
-                if(PAPI_read(EventSet, p->values[p->num_samples]) != PAPI_OK) { // PAPI_accum() saves counter values and resets the counters
+                if(PAPI_accum(EventSet, p->values[p->num_samples]) != PAPI_OK) { // PAPI_accum() saves counter values and resets the counters
                     printf("Failed to record sample %i\n", p->num_samples);
                     continue; // wait until process finishes...
                 }
-                 
+                // wait some time, somehow...
+ 
                 p->num_samples++;
                 printf("Collected %i/%i samples\n", p->num_samples, MAX_SAMPLES); 
-                if(wpid == pid) break; // process completed
             }
             if(wpid < 0) {
                 printf("Failed to wait for pid=%i\n", pid);
