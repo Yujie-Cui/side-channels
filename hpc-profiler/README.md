@@ -8,7 +8,7 @@ To build `hpc-profiler`, run:
 ```
 make
 ```
-This builds the `profiler` executable and a `test` executable.
+This builds the `hpc-profiler` executable and a `test` executable.
 
 ### Run
 To run `hpc-profiler` and capture HPC data, run:

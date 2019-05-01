@@ -12,7 +12,7 @@ test: test.o
 	$(CC) test.o $(CFLAGS) -o test
 
 profiler: profiler.o
-	$(CC) $(IDIR) profiler.o $(LIBS) $(CFLAGS) -o profiler
+	$(CC) $(IDIR) profiler.o $(LIBS) $(CFLAGS) -o hpc-profiler
 
 clean:
-	rm *.o test profiler
+	rm *.o test hpc-profiler

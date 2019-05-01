@@ -20,7 +20,7 @@ void sig_events_set(int sig);
 
 int parse_config(char* filename, profile_t** profiles);
 void print_profiles(profile_t* profiles, int num_profiles);
-void create_cvs(profile_t* profiles, int num_profiles);
+void create_csv(profile_t* profiles, int num_profiles);
 void record_run(profile_t* profiles, int num_profiles);
 
 int main(int argc, char* argv[]) {
@@ -152,11 +152,8 @@ int main(int argc, char* argv[]) {
 
     } // for each profile ; end
 
-    // create CSV file of all data
-    create_cvs(profiles, num_profiles);
-
-    // record the configurations that were run
     record_run(profiles, num_profiles);
+    create_csv(profiles, num_profiles);
 
     return 0;
 }
@@ -228,7 +225,7 @@ void print_profiles(profile_t* profiles, int num_profiles) {
     }
 }
 
-void create_cvs(profile_t* profiles, int num_profiles) {
+void create_csv(profile_t* profiles, int num_profiles) {
     FILE* csv = fopen("hpc-data.csv", "w");
     if(!csv) {
         printf("Failed to create .csv file.\n");
