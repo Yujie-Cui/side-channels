@@ -29,3 +29,6 @@ Currently `hpc-profiler` only captures PAPI Preset Events. To see all available 
 papi/src/utils/papi_avail
 ```
 To add events to capture, modify the `profiler.h` file and add preset event codes to the `events[]` array.
+
+## To-Do
+* Make it easier to add new event to profile (maybe use [this method](http://www.linux-pages.com/2013/02/how-to-map-enum-to-strings-in-c/)).

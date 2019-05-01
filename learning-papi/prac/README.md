@@ -25,7 +25,7 @@ sudo sh -c 'echo -1 >/proc/sys/kernel/perf_event_paranoid'
 
 4. This compiler warning: `gcc: warning: /usr/local/lib/libpapi.a: linker input file unused because linking not done`
 
-5. Undefined references...
+5. ~~Undefined references...~~
 ```
 hAPI.c:(.text+0x24): undefined reference to `PAPI_num_counters'
 hAPI.c:(.text+0x74): undefined reference to `PAPI_start_counters'
@@ -35,4 +35,4 @@ hAPI.c:(.text+0x136): undefined reference to `PAPI_stop_counters'
 ```
 Solution: Don't clone the git respository shown on the [PAPI Software Page](http://icl.utk.edu/papi/software/). Instead scroll down and download the latest `papi-.tar.gz` and build PAPI from the downloaded directory.
 
-6. It looks like there is no PAPI support in VirtualBox [source](https://ptools-perfapi.eecs.utk.narkive.com/AxFU8LIh/papi-on-virtualbox).
+6. It looks like there is no PAPI support in VirtualBox ([source](https://ptools-perfapi.eecs.utk.narkive.com/AxFU8LIh/papi-on-virtualbox)).
