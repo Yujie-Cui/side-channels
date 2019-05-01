@@ -1,0 +1,9 @@
+Max command args,256
+Sampling frequency (microsec),100000
+Total sample time per program (microsec),60000000
+Max samples per program,600
+Number events,3
+Events,PAPI_TOT_INS,PAPI_L3_TCM,PAPI_L3_TCA,
+Number of programs,2
+./test,
+/bin/ls,

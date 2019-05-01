@@ -23,6 +23,9 @@ Each line in the `run.config` file is a separate program to profile. Below is an
 ```
 The above `run.config` will cause `hpc-profiler` to profile the `test` executable and the `ls` executable.
 
+Running `hpc-profiler` will generate two `.csv` files: `hpc-data.csv` and `run.csv`.
+`hpc-data.csv` contains the HPC data of the programs that were profiled. `run.csv` contains the configuration used during the profiling (ex. sampling frequency, total sample time, etc.).
+
 ## Events to Capture
 Currently `hpc-profiler` only captures PAPI Preset Events. To see all available preset events on your CPU, download and build PAPI, and then run:
 ```

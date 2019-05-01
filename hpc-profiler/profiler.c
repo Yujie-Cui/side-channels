@@ -21,6 +21,7 @@ void sig_events_set(int sig);
 int parse_config(char* filename, profile_t** profiles);
 void print_profiles(profile_t* profiles, int num_profiles);
 void create_cvs(profile_t* profiles, int num_profiles);
+void record_run(profile_t* profiles, int num_profiles);
 
 int main(int argc, char* argv[]) {
 
@@ -71,7 +72,7 @@ int main(int argc, char* argv[]) {
         pid_t pid, wpid;
         int status = 0;
         long long values[NUM_EVENTS]; // not used ; only used to stop the counters at the end
-        printf("%i: %s\n", i, p->argv[0]);
+        printf("%i: Will profile %s\n", i, p->argv[0]);
 
         pid = fork();
         
@@ -81,7 +82,6 @@ int main(int argc, char* argv[]) {
         }
         else if(pid == 0) { // child process
             pause(); // wait until events are attached 
-            printf("pid=%i: Imma execute %s\n", getpid(), p->argv[0]);
             ret = execve(p->argv[0], p->argv, NULL); // execute command line args
             printf("Should never arrive here... execve() error occurred.\n");
         } else { // parent process ; responsible for attaching HPC events to process
@@ -106,14 +106,16 @@ int main(int argc, char* argv[]) {
             if(ret < 0) {
                 printf("Failed to send signal to child %i\n", pid);
             } else {
-                printf("pid=%i: Successfully sent signal to child %i\n", getpid(), pid);
+                if(DEBUG) printf("pid=%i: Successfully sent signal to child %i\n", getpid(), pid);
             }
 
             // sample until child finishes or MAX_SAMPLES is reached 
             p->num_samples = 0;
+            long long start_usec = PAPI_get_real_usec();
             while( (wpid = waitpid(pid, &status, WNOHANG)) >= 0 ) {
                 if(wpid == pid) break; // process completed
                 if(p->num_samples >= MAX_SAMPLES) { // maximum number of samples reached
+                    // should terminate process...
                     continue;
                 }
                 // else keep sampling
@@ -121,16 +123,18 @@ int main(int argc, char* argv[]) {
                     printf("Failed to record sample %i\n", p->num_samples);
                     continue; // wait until process finishes...
                 }
+                p->timestamps[p->num_samples] = PAPI_get_real_usec() - start_usec;
+                if(p->num_samples > 0) p->intervals[p->num_samples] = p->timestamps[p->num_samples] - p->timestamps[p->num_samples - 1];
+                else p->intervals[p->num_samples] = p->timestamps[p->num_samples];
                 // wait some time, somehow...
- 
                 p->num_samples++;
-                printf("Collected %i/%i samples\n", p->num_samples, MAX_SAMPLES); 
+                if(DEBUG) printf("%i/%i samples collected.\n", p->num_samples, MAX_SAMPLES);
             }
             if(wpid < 0) {
                 printf("Failed to wait for pid=%i\n", pid);
             }
            
-            printf("Recorded %i samples for %s\n", p->num_samples, p->argv[0]); 
+            printf("%i: Recorded %i samples for %s\n", i, p->num_samples, p->argv[0]); 
             // stop counters
             if(PAPI_stop(EventSet, values) != PAPI_OK) {
                 printf("Failed to stop counters.\n");
@@ -142,7 +146,8 @@ int main(int argc, char* argv[]) {
             if(ret != PAPI_OK) {
                 printf("Failed to detach events from process. %i\n", ret);
             }
-        
+            printf("---\n");
+ 
         } // parent process ; end
 
     } // for each profile ; end
@@ -150,12 +155,15 @@ int main(int argc, char* argv[]) {
     // create CSV file of all data
     create_cvs(profiles, num_profiles);
 
+    // record the configurations that were run
+    record_run(profiles, num_profiles);
+
     return 0;
 }
 
 void sig_events_set(int sig) {
     if(sig == SIGUSR1) {
-        printf("pid=%i: recieved signal!\n", getpid());
+        if(DEBUG) printf("pid=%i: recieved signal!\n", getpid());
     }
 }
 
@@ -233,6 +241,8 @@ void create_cvs(profile_t* profiles, int num_profiles) {
         profile_t* p = &profiles[i];
         char eventStr[PAPI_MAX_STR_LEN];
         int ret;
+        fprintf(csv, "%s-timestamp (usec),", basename(p->argv[0]));
+        fprintf(csv, "%s-interval (usec),", basename(p->argv[0]));
         for(int s=0; s<NUM_EVENTS; s++) {
             memset(eventStr, 0, PAPI_MAX_STR_LEN);
             ret = PAPI_event_code_to_name(events[s], eventStr);
@@ -249,8 +259,10 @@ void create_cvs(profile_t* profiles, int num_profiles) {
         fprintf(csv, "%i,", i); // sample number
         for(int j=0; j<num_profiles; j++) {
             profile_t* p = &profiles[j];
+            fprintf(csv, "%llu,", p->timestamps[i]); 
+            fprintf(csv, "%llu,", p->intervals[i]);
             for(int s=0; s<NUM_EVENTS; s++) {
-                if(i >= p->num_samples) fprintf(csv, "-1,");
+                if(i >= p->num_samples) fprintf(csv, "0,");
                 else fprintf(csv, "%llu,", p->values[i][s]);
             }
         }
@@ -260,3 +272,40 @@ void create_cvs(profile_t* profiles, int num_profiles) {
     fclose(csv);
 }
 
+void record_run(profile_t* profiles, int num_profiles) {
+    FILE* run = fopen("run.csv", "w");
+    if(!run) {
+        printf("Failed to create a run.out file.\n");
+    }
+    fprintf(run, "Max command args,%i\n", MAX_CMD_ARGS);
+    fprintf(run, "Sampling frequency (microsec),%i\n", SAMPLE_FREQ);
+    fprintf(run, "Total sample time per program (microsec),%i\n", TOTAL_SAMPLE_TIME);
+    fprintf(run, "Max samples per program,%i\n", MAX_SAMPLES);
+    fprintf(run, "Number events,%i\n", NUM_EVENTS);
+   
+    // record events
+    char eventStr[PAPI_MAX_STR_LEN];
+    int ret;
+    fprintf(run, "Events,");
+    for(int i=0; i<NUM_EVENTS; i++) {
+        memset(eventStr, 0, PAPI_MAX_STR_LEN);
+        ret = PAPI_event_code_to_name(events[i], eventStr);
+        if(ret != PAPI_OK) {
+            printf("Failed to convert event %i to string\n", events[i]);
+        }
+        fprintf(run, "%s,", eventStr); 
+    }
+    fprintf(run, "\n");
+
+    // record the programs that ran
+    fprintf(run, "Number of programs,%i\n", num_profiles);
+    for(int i=0; i<num_profiles; i++) {
+        profile_t* p = &profiles[i];
+        for(int c=0; c<p->argc; c++) {
+            fprintf(run, "%s,", p->argv[c]);
+        }
+        fprintf(run, "\n");
+    }
+ 
+    fclose(run);
+}
