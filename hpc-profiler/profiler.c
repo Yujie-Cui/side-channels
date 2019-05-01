@@ -127,6 +127,10 @@ int main(int argc, char* argv[]) {
                 if(p->num_samples > 0) p->intervals[p->num_samples] = p->timestamps[p->num_samples] - p->timestamps[p->num_samples - 1];
                 else p->intervals[p->num_samples] = p->timestamps[p->num_samples];
                 // wait some time, somehow...
+                ret = usleep(SAMPLE_FREQ); 
+                if(ret < 0) {
+                    printf("Failed to sleep for %i microseconds.\n", SAMPLE_FREQ);
+                }
                 p->num_samples++;
                 if(DEBUG) printf("%i/%i samples collected.\n", p->num_samples, MAX_SAMPLES);
             }
@@ -134,7 +138,7 @@ int main(int argc, char* argv[]) {
                 printf("Failed to wait for pid=%i\n", pid);
             }
            
-            printf("%i: Recorded %i samples for %s\n", i, p->num_samples, p->argv[0]); 
+            printf("%i: Recorded %i/%i samples for %s\n", i, p->num_samples, MAX_SAMPLES, p->argv[0]); 
             // stop counters
             if(PAPI_stop(EventSet, values) != PAPI_OK) {
                 printf("Failed to stop counters.\n");
@@ -238,15 +242,15 @@ void create_csv(profile_t* profiles, int num_profiles) {
         profile_t* p = &profiles[i];
         char eventStr[PAPI_MAX_STR_LEN];
         int ret;
-        fprintf(csv, "%s-timestamp (usec),", basename(p->argv[0]));
-        fprintf(csv, "%s-interval (usec),", basename(p->argv[0]));
+        //fprintf(csv, "%s-timestamp (usec),", basename(p->argv[0]));
+        fprintf(csv, "interval (usec)-%s,", basename(p->argv[0]));
         for(int s=0; s<NUM_EVENTS; s++) {
             memset(eventStr, 0, PAPI_MAX_STR_LEN);
             ret = PAPI_event_code_to_name(events[s], eventStr);
             if(ret != PAPI_OK) {
                 printf("Failed to convert event %i to string\n", events[s]);
             }
-            fprintf(csv, "%s-%s,", basename(p->argv[0]), eventStr); 
+            fprintf(csv, "%s-%s,", eventStr, basename(p->argv[0])); 
         }
     }
     fprintf(csv, "\n");
@@ -256,7 +260,7 @@ void create_csv(profile_t* profiles, int num_profiles) {
         fprintf(csv, "%i,", i); // sample number
         for(int j=0; j<num_profiles; j++) {
             profile_t* p = &profiles[j];
-            fprintf(csv, "%llu,", p->timestamps[i]); 
+            //fprintf(csv, "%llu,", p->timestamps[i]); 
             fprintf(csv, "%llu,", p->intervals[i]);
             for(int s=0; s<NUM_EVENTS; s++) {
                 if(i >= p->num_samples) fprintf(csv, "0,");

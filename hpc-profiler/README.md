@@ -13,7 +13,7 @@ This builds the `hpc-profiler` executable and a `test` executable.
 ### Run
 To run `hpc-profiler` and capture HPC data, run:
 ```
-./profiler <run.config>
+./hpc-profiler <run.config>
 ```
 where `<run.config>` is a file which contains the command line arguments of programs to profile.
 Each line in the `run.config` file is a separate program to profile. Below is an example of a `run.config` file:
