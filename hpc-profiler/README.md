@@ -36,6 +36,9 @@ papi/src/utils/papi_avail
 ```
 To add events to capture, modify the `profiler.h` file and add preset event codes to the `events[]` array.
 
+## Issues
+* Doesn't fork a new process properly if there are redirections in the command line... (ex. SPEC benchmarks).
+
 ## To-Do
 * Make it easier to add new event to profile (maybe use [this method](http://www.linux-pages.com/2013/02/how-to-map-enum-to-strings-in-c/)).
 * ~~Create an option to place individual runs in the same `.csv` file or separate files.~~

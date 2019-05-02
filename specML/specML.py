@@ -18,7 +18,7 @@ num_inputs = len(inputs)
 # Add model layers
 model.add( Dense(10, activation='relu', input_shape=(num_inputs,)) )
 model.add( Dense(32, activation='relu') )
-model.add( Dense(1) )
+model.add( Dense(1, activation='sigmoid') )
 
 # Compile model
 model.compile(optimizer='adam', loss='mean_squared_error', metrics=['accuracy'])
@@ -60,11 +60,14 @@ for csv_file in glob.glob('data/*.csv'):
     train_y.head()
 
     # train the network!
+    #model.fit(train_x, train_y, validation_split=0.2, epochs=30)
     model.fit(train_x, train_y, validation_split=0.2, epochs=30, callbacks=[early_stopping_monitor])
 
 # Read in HPC data from .csv files and test the model
 for csv_file in glob.glob('data/test/*.csv'):
-    
+   
+    print('Opening %s for testing' % csv_file)
+ 
     df = pd.read_csv(csv_file)
     
     # get test data (inputs into the neural network)
@@ -84,5 +87,7 @@ for csv_file in glob.glob('data/test/*.csv'):
     labels = np.full((num_rows, 1), is_spectre)
     
     test_y = pd.DataFrame(labels, columns=['spectre'])
-    
-    predictions = model.predict(test_x)
+    #predictions = model.predict(test_x)
+    score = model.evaluate(test_x, test_y, verbose=1)
+    print('Test loss: ', score[0])
+    print('Test accuracy: ', score[1])
