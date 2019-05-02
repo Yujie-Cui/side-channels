@@ -37,7 +37,11 @@ int main(int argc, char* argv[]) {
 
     profile_t* profiles = NULL;
     int num_profiles = parse_config(argv[1], &profiles);
-    if(num_profiles == 1) separate = 1;
+    if(num_profiles < 0) {
+        printf("Failed to parse %s\n", argv[1]);
+        return 1;
+    }
+    else if(num_profiles == 1) separate = 1;
     //print_profiles(profiles, num_profiles);
 
     int EventSet = PAPI_NULL;
