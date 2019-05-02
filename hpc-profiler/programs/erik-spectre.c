@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 #ifdef _MSC_VER
 #include <intrin.h> /* for rdtscp and clflush */
 #pragma optimize("gt",on)
@@ -34,7 +35,8 @@ uint8_t array1[160] = {
 uint8_t unused2[64];
 uint8_t array2[256 * 512];
 
-char * secret = "The Magic Words are Squeamish Ossifrage.";
+//char * secret = "The Magic Words are Squeamish Ossifrage.";
+char* secret = "All games consist of three parts: an introductory phase in which Sam begins in one room of his house, looking for his cape (or equipment that makes him courageous enough to face Darkness in the first game) and entering an imaginary world, the actual journey he undertakes in that world, and a concluding cinematic that ends the story. The world changes every time a new game is started (even though the main and side objectives stay the same). The games consist of Pajama Sam finding objects in the world and using them somewhere else. A cutscene is usually played if the right item is used. Each game has a save feature. In addition to a main storyline, each individual game has a separate objective to collect objects scattered around Sam's world.\nIn the first game, the player had no control over what scenarios would be encountered in one playthrough. In the sequel, the player can choose from several combinations of scenarios to play with, and in the last two games, he/she is given complete control on what kind of scenarios are encountered for each step towards resolving the main conflict.";
 
 uint8_t temp = 0; /* Used so compiler won’t optimize out victim_function() */
 
@@ -116,7 +118,9 @@ void readMemoryByte(size_t malicious_x, uint8_t value[2], int score[2]) {
 int main(int argc,
   const char * * argv) {
   size_t malicious_x = (size_t)(secret - (char * ) array1); /* default for malicious_x */
-  int i, score[2], len = 40;
+  //int i, score[2], len = 40;
+  int i, score[2];
+  int len = strlen(secret);
   uint8_t value[2];
 
   for (i = 0; i < sizeof(array2); i++)

@@ -13,7 +13,7 @@ This builds the `hpc-profiler` executable and a `test` executable.
 ### Run
 To run `hpc-profiler` and capture HPC data, run:
 ```
-./hpc-profiler <run.config>
+./hpc-profiler <run.config> -s
 ```
 where `<run.config>` is a file which contains the command line arguments of programs to profile.
 Each line in the `run.config` file is a separate program to profile. Below is an example of a `run.config` file:
@@ -23,8 +23,11 @@ Each line in the `run.config` file is a separate program to profile. Below is an
 ```
 The above `run.config` will cause `hpc-profiler` to profile the `test` executable and the `ls` executable.
 
-Running `hpc-profiler` will generate two `.csv` files: `hpc-data.csv` and `run.csv`.
-`hpc-data.csv` contains the HPC data of the programs that were profiled. `run.csv` contains the configuration used during the profiling (ex. sampling frequency, total sample time, etc.).
+The `-s` flag in the command line is optional. If `-s` flag is specified, then each of the process data will be placed into a separate `.csv` file.
+
+Running `hpc-profiler` will generate a `run.csv`, which contains the configuration used during the profiling (ex. sampling frequency, total sample time, etc.).
+If profiled with the `-s` flag, HPC data with be saved into separate `<program>.csv` files, where `<program>` is the name of the executable that was profiled.
+Withou the `-s` flag, all data is compiled into `hpc-data.csv`. 
 
 ## Events to Capture
 Currently `hpc-profiler` only captures PAPI Preset Events. To see all available preset events on your CPU, download and build PAPI, and then run:
@@ -35,3 +38,4 @@ To add events to capture, modify the `profiler.h` file and add preset event code
 
 ## To-Do
 * Make it easier to add new event to profile (maybe use [this method](http://www.linux-pages.com/2013/02/how-to-map-enum-to-strings-in-c/)).
+* ~~Create an option to place individual runs in the same `.csv` file or separate files.~~

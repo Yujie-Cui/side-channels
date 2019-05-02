@@ -20,18 +20,24 @@ void sig_events_set(int sig);
 
 int parse_config(char* filename, profile_t** profiles);
 void print_profiles(profile_t* profiles, int num_profiles);
-void create_csv(profile_t* profiles, int num_profiles);
+void create_csv(char separate, profile_t* profiles, int num_profiles);
 void record_run(profile_t* profiles, int num_profiles);
 
 int main(int argc, char* argv[]) {
+
+    char separate = 0; // if true, create a .csv file for each process ; else, all data will be recorded in the same .csv file 
 
     if(argc < 2) {
         printf("./profile <.config>\n");
         return 1;
     }
+    if(argc > 2) {
+        if(strcmp(argv[2], "-s") == 0 || strcmp(argv[2], "-separate") == 0) separate = 1; 
+    }
 
     profile_t* profiles = NULL;
     int num_profiles = parse_config(argv[1], &profiles);
+    if(num_profiles == 1) separate = 1;
     //print_profiles(profiles, num_profiles);
 
     int EventSet = PAPI_NULL;
@@ -58,7 +64,7 @@ int main(int argc, char* argv[]) {
 
     // set signal handler
     signal(SIGUSR1, sig_events_set);
-
+ 
     // fork and profile each process
     for(int i=0; i<num_profiles; i++) {
        
@@ -117,7 +123,8 @@ int main(int argc, char* argv[]) {
                 while( (wpid = waitpid(pid, &status, WNOHANG)) >= 0 ) {
                     if(wpid == pid) break; // process completed
                     if(p->num_samples >= MAX_SAMPLES) { // maximum number of samples reached
-                        // should terminate process...
+                        // should terminate process.
+                        kill(pid, SIGTERM);
                         continue;
                     }
                     // else keep sampling
@@ -128,11 +135,12 @@ int main(int argc, char* argv[]) {
                     p->timestamps[p->num_samples] = PAPI_get_real_usec() - start_usec;
                     if(p->num_samples > 0) p->intervals[p->num_samples] = p->timestamps[p->num_samples] - p->timestamps[p->num_samples - 1];
                     else p->intervals[p->num_samples] = 0;
-                    // wait some time, somehow...
+                    
                     ret = usleep(SAMPLE_FREQ); 
                     if(ret < 0) {
                         printf("Failed to sleep for %i microseconds.\n", SAMPLE_FREQ);
                     }
+                    
                     p->num_samples++;
                     if(DEBUG) printf("%i/%i samples collected.\n", p->num_samples, MAX_SAMPLES);
                 }
@@ -141,6 +149,7 @@ int main(int argc, char* argv[]) {
                 }
                
                 printf("%i: Recorded %i/%i samples for %s\n", i, p->num_samples, MAX_SAMPLES, p->argv[0]); 
+
                 // stop counters
                 if(PAPI_stop(EventSet, values) != PAPI_OK) {
                     printf("Failed to stop counters.\n");
@@ -160,7 +169,7 @@ int main(int argc, char* argv[]) {
     } // for each profile ; end
 
     record_run(profiles, num_profiles);
-    create_csv(profiles, num_profiles);
+    create_csv(separate, profiles, num_profiles);
 
     return 0;
 }
@@ -232,18 +241,15 @@ void print_profiles(profile_t* profiles, int num_profiles) {
     }
 }
 
-void create_csv(profile_t* profiles, int num_profiles) {
-    FILE* csv = fopen("hpc-data.csv", "w");
-    if(!csv) {
-        printf("Failed to create .csv file.\n");
-        return;
-    }
-     
-    // create csv header
+void create_csv_header(FILE* csv, char separate, profile_t* profiles, int num_profiles) {
+    
     fprintf(csv, "sample,");
-    for(int s=0; s<num_profiles; s++) {
-        profile_t* p = &profiles[s];
-        fprintf(csv, "interval (usec)-%s,", basename(p->argv[0]));
+    if(separate) fprintf(csv, "interval (usec),");
+    else {
+        for(int s=0; s<num_profiles; s++) {
+            profile_t* p = &profiles[s];
+            fprintf(csv, "interval (usec)-%s-%i,", basename(p->argv[0]), p->num_samples);
+        }
     }
     for(int i=0; i<NUM_EVENTS; i++) {
         char eventStr[PAPI_MAX_STR_LEN];
@@ -253,65 +259,77 @@ void create_csv(profile_t* profiles, int num_profiles) {
         if(ret != PAPI_OK) {
             printf("Failed to convert event %i to string\n", events[i]);
         }
-        for(int s=0; s<num_profiles; s++) {
-            profile_t* p = &profiles[s];
-            fprintf(csv, "%s-%s,", eventStr, basename(p->argv[0]));
+        if(separate) fprintf(csv, "%s,", eventStr);
+        else {
+            for(int s=0; s<num_profiles; s++) {
+                profile_t* p = &profiles[s];
+                fprintf(csv, "%s-%s,", eventStr, basename(p->argv[0]));
+            }
         }
     }
     fprintf(csv, "\n");
+}
 
-    // record data of each process ; one sample per row
-    for(int i=0; i<MAX_SAMPLES; i++) {
-        fprintf(csv, "%i,", i); // sample number
+void create_csv(char separate, profile_t* profiles, int num_profiles) {
+    
+    if(separate) {
         for(int s=0; s<num_profiles; s++) {
             profile_t* p = &profiles[s];
-            fprintf(csv, "%llu,", p->intervals[i]);
+            char name[512] = {0};
+            strcpy(name, basename(p->argv[0]));
+            strcat(name, ".csv");
+            printf("Writing %s data to %s\n", p->argv[0], name);
+
+            FILE* csv = fopen(name, "w");
+            if(!csv) {
+                printf("Failed to create %s\n", name);
+                continue;
+            }
+            
+            create_csv_header(csv, separate, profiles, num_profiles); 
+            for(int i=0; i<MAX_SAMPLES; i++) {
+                fprintf(csv, "%i,", i); // sample number
+                fprintf(csv, "%llu,", p->intervals[i]);
+                for(int j=0; j<NUM_EVENTS; j++) {
+                    if(i >= p->num_samples) fprintf(csv, "0,");
+                    else fprintf(csv, "%llu,", p->values[i][j]);
+                }
+                fprintf(csv, "\n");
+            }  
+
+            fclose(csv);
+        } // for each profile ; end 
+    } // if separate ; end
+    else {
+        
+        FILE* csv = fopen("hpc-data.csv", "w");
+        if(!csv) {
+            printf("Failed to create .csv file.\n");
+            return;
         }
-        for(int j=0; j<NUM_EVENTS; j++) {
+        
+        create_csv_header(csv, separate, profiles, num_profiles); 
+            
+        // record data of each process ; one sample per row
+        for(int i=0; i<MAX_SAMPLES; i++) {
+            fprintf(csv, "%i,", i); // sample number
             for(int s=0; s<num_profiles; s++) {
                 profile_t* p = &profiles[s];
-                if(i >= p->num_samples) fprintf(csv, "0,");
-                else fprintf(csv, "%llu,", p->values[i][j]);
+                fprintf(csv, "%llu,", p->intervals[i]);
             }
-        }
-        fprintf(csv, "\n");
-    }
-
-    //// create csv header
-    //fprintf(csv, "sample,");
-    //for(int i=0; i<num_profiles; i++) {
-    //    profile_t* p = &profiles[i];
-    //    char eventStr[PAPI_MAX_STR_LEN];
-    //    int ret;
-    //    //fprintf(csv, "%s-timestamp (usec),", basename(p->argv[0]));
-    //    fprintf(csv, "interval (usec)-%s,", basename(p->argv[0]));
-    //    for(int s=0; s<NUM_EVENTS; s++) {
-    //        memset(eventStr, 0, PAPI_MAX_STR_LEN);
-    //        ret = PAPI_event_code_to_name(events[s], eventStr);
-    //        if(ret != PAPI_OK) {
-    //            printf("Failed to convert event %i to string\n", events[s]);
-    //        }
-    //        fprintf(csv, "%s-%s,", eventStr, basename(p->argv[0])); 
-    //    }
-    //}
-    //fprintf(csv, "\n");
-
-    //// record data of each process ; one sample per row
-    //for(int i=0; i<MAX_SAMPLES; i++) {
-    //    fprintf(csv, "%i,", i); // sample number
-    //    for(int j=0; j<num_profiles; j++) {
-    //        profile_t* p = &profiles[j];
-    //        //fprintf(csv, "%llu,", p->timestamps[i]); 
-    //        fprintf(csv, "%llu,", p->intervals[i]);
-    //        for(int s=0; s<NUM_EVENTS; s++) {
-    //            if(i >= p->num_samples) fprintf(csv, "0,");
-    //            else fprintf(csv, "%llu,", p->values[i][s]);
-    //        }
-    //    }
-    //    fprintf(csv, "\n");
-    //}
-
-    fclose(csv);
+            for(int j=0; j<NUM_EVENTS; j++) {
+                for(int s=0; s<num_profiles; s++) {
+                    profile_t* p = &profiles[s];
+                    if(i >= p->num_samples) fprintf(csv, "0,");
+                    else fprintf(csv, "%llu,", p->values[i][j]);
+                }
+            }
+            fprintf(csv, "\n");
+        }  
+    
+        fclose(csv);
+    } 
+  
 }
 
 void record_run(profile_t* profiles, int num_profiles) {
