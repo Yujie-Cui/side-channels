@@ -16,7 +16,7 @@ To run `hpc-profiler` and capture HPC data, run:
 ./hpc-profiler <run.config> -s
 ```
 where `<run.config>` is a file which contains the command line arguments of programs to profile.
-Each line in the `run.config` file is a separate program to profile. Below is an example of a `run.config` file:
+Each line in the `run.config` file is a separate program to profile. Below is an example `run.config` file:
 ```
 ./test
 /bin/ls

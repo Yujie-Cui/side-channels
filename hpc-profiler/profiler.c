@@ -259,13 +259,14 @@ void create_csv_header(FILE* csv, char separate, profile_t* profiles, int num_pr
         if(ret != PAPI_OK) {
             printf("Failed to convert event %i to string\n", events[i]);
         }
-        if(separate) fprintf(csv, "%s,", eventStr);
+        if(separate) fprintf(csv, "%s", eventStr);
         else {
             for(int s=0; s<num_profiles; s++) {
                 profile_t* p = &profiles[s];
-                fprintf(csv, "%s-%s,", eventStr, basename(p->argv[0]));
+                fprintf(csv, "%s-%s", eventStr, basename(p->argv[0]));
             }
         }
+        if(i < NUM_EVENTS-1) fprintf(csv, ",");
     }
     fprintf(csv, "\n");
 }
@@ -291,8 +292,10 @@ void create_csv(char separate, profile_t* profiles, int num_profiles) {
                 fprintf(csv, "%i,", i); // sample number
                 fprintf(csv, "%llu,", p->intervals[i]);
                 for(int j=0; j<NUM_EVENTS; j++) {
-                    if(i >= p->num_samples) fprintf(csv, "0,");
-                    else fprintf(csv, "%llu,", p->values[i][j]);
+                    if(i >= p->num_samples) fprintf(csv, "0");
+                    else fprintf(csv, "%llu", p->values[i][j]);
+                    
+                    if(j < NUM_EVENTS-1) fprintf(csv, ",");
                 }
                 fprintf(csv, "\n");
             }  
@@ -320,8 +323,10 @@ void create_csv(char separate, profile_t* profiles, int num_profiles) {
             for(int j=0; j<NUM_EVENTS; j++) {
                 for(int s=0; s<num_profiles; s++) {
                     profile_t* p = &profiles[s];
-                    if(i >= p->num_samples) fprintf(csv, "0,");
-                    else fprintf(csv, "%llu,", p->values[i][j]);
+                    if(i >= p->num_samples) fprintf(csv, "0");
+                    else fprintf(csv, "%llu", p->values[i][j]);
+                    
+                    if(j < NUM_EVENTS - 1) fprintf(csv, ",");
                 }
             }
             fprintf(csv, "\n");
@@ -353,7 +358,8 @@ void record_run(profile_t* profiles, int num_profiles) {
         if(ret != PAPI_OK) {
             printf("Failed to convert event %i to string\n", events[i]);
         }
-        fprintf(run, "%s,", eventStr); 
+        fprintf(run, "%s", eventStr);
+        if(i < NUM_EVENTS-1) fprintf(run, ",");
     }
     fprintf(run, "\n");
 
@@ -362,7 +368,8 @@ void record_run(profile_t* profiles, int num_profiles) {
     for(int i=0; i<num_profiles; i++) {
         profile_t* p = &profiles[i];
         for(int c=0; c<p->argc; c++) {
-            fprintf(run, "%s,", p->argv[c]);
+            fprintf(run, "%s", p->argv[c]);
+            if(c < p->argc-1) fprintf(run, ",");
         }
         fprintf(run, "\n");
     }

@@ -3,7 +3,7 @@ Sampling frequency (microsec),1000
 Total sample time per program (microsec),600000
 Max samples per program,600
 Number events,3
-Events,PAPI_TOT_INS,PAPI_L3_TCM,PAPI_L3_TCA,
+Events,PAPI_TOT_INS,PAPI_L3_TCM,PAPI_L3_TCA
 Number of programs,2
-programs/erik-spectre,
-programs/spectre,
+programs/erik-spectre
+programs/spectre
