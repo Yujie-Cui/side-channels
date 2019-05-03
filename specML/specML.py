@@ -62,7 +62,7 @@ for csv_file in glob.glob('data/*.csv'):
     train_y.head()
 
     # train the network!
-    model.fit(train_x, train_y, validation_split=0.2, epochs=30, callbacks=[early_stopping_monitor])
+    model.fit(train_x, train_y, validation_split=0.1, epochs=30, callbacks=[early_stopping_monitor])
 
 # Read in HPC data from .csv files and test the model
 for csv_file in glob.glob('data/test/*.csv'):
@@ -88,7 +88,5 @@ for csv_file in glob.glob('data/test/*.csv'):
     labels = np.full((num_rows, 1), is_spectre)
     
     test_y = pd.DataFrame(labels, columns=['spectre'])
-    #predictions = model.predict(test_x)
     score = model.evaluate(test_x, test_y, verbose=1)
-    print('Test loss: ', score[0])
     print('Test accuracy: ', score[1])
