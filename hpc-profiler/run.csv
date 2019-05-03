@@ -4,6 +4,5 @@ Total sample time per program (microsec),6000000
 Max samples per program,6000
 Number events,3
 Events,PAPI_TOT_INS,PAPI_L3_TCM,PAPI_L3_TCA
-Number of programs,2
-programs/erik-spectre
-programs/spectre
+Number of programs,1
+programs/flush-prefetch-spectre

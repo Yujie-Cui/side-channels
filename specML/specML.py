@@ -2,6 +2,7 @@
 
 from keras.models import Sequential
 from keras.layers import Dense
+from keras.layers import LSTM
 from keras.callbacks import EarlyStopping
 
 import glob
@@ -16,12 +17,13 @@ model = Sequential()
 num_inputs = len(inputs)
 
 # Add model layers
-model.add( Dense(10, activation='relu', input_shape=(num_inputs,)) )
+model.add( Dense(3, activation='relu', input_shape=(num_inputs,)) )
 model.add( Dense(32, activation='relu') )
 model.add( Dense(1, activation='sigmoid') )
 
 # Compile model
-model.compile(optimizer='adam', loss='mean_squared_error', metrics=['accuracy'])
+#model.compile(optimizer='adam', loss='mean_squared_error', metrics=['accuracy'])
+model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
 # If model stops improving, stop the training
 early_stopping_monitor = EarlyStopping(patience=3)
@@ -60,7 +62,6 @@ for csv_file in glob.glob('data/*.csv'):
     train_y.head()
 
     # train the network!
-    #model.fit(train_x, train_y, validation_split=0.2, epochs=30)
     model.fit(train_x, train_y, validation_split=0.2, epochs=30, callbacks=[early_stopping_monitor])
 
 # Read in HPC data from .csv files and test the model
