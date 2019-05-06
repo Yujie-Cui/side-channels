@@ -27,6 +27,9 @@ model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy']
 # If model stops improving, stop the training
 early_stopping_monitor = EarlyStopping(patience=3)
 
+# combined at from all .csv files
+df_all_data = None
+
 # Read in HPC data from .csv files and train the model
 for csv_file in glob.glob('data/*.csv'):
     
@@ -35,34 +38,32 @@ for csv_file in glob.glob('data/*.csv'):
     # create a dataframe
     df = pd.read_csv(csv_file)
 
-    # check if data is correct
-    df.head()
-
-    # get training data (inputs into the neural network)
-    drop_data = []
-    for column in list(df):
-        if column not in inputs:
-            drop_data.append(column)
-    
-    train_x = df.drop(columns=drop_data)
-    
-    print('Training data')
-    train_x.head()
-
-    # create labels
-    labels = None
+    # create a column for labels
     num_rows = len(df)
     is_spectre = 0
     if 'spectre' in csv_file:
         is_spectre = 1 
-    labels = np.full((num_rows, 1), is_spectre)
+    df['spectre'] = np.full((num_rows, 1), is_spectre)
 
-    train_y = pd.DataFrame(labels, columns=['spectre'])
-    train_y.head()
+    # combine data
+    df_all_data = pd.concat([df_all_data, df])
 
-    # train the network!
-    model.fit(train_x, train_y, validation_split=0.1, epochs=30, callbacks=[early_stopping_monitor])
+# shuffle data
+df_all_data = df_all_data.sample(frac=1)
+print('df_all_data', df_all_data)
 
+# get training data (inputs into the neural network)
+drop_data = []
+for column in list(df):
+    if column not in inputs:
+        drop_data.append(column)
+
+train_x = df.drop(columns=drop_data)
+train_y = df['spectre']
+
+# train the network!
+model.fit(train_x, train_y, validation_split=0.2, epochs=30, callbacks=[early_stopping_monitor])
+   
 # Read in HPC data from .csv files and test the model
 for csv_file in glob.glob('data/test/*.csv'):
    
