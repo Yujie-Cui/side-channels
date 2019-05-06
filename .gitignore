@@ -1,4 +1,3 @@
 *.o
 *.swp
 learning-papi/papi/
-*.csv
