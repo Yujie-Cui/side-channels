@@ -23,12 +23,12 @@ Each line in the `run.config` file is a separate program to profile. Below is an
 ```
 The above `run.config` will cause `hpc-profiler` to profile the `test` executable and the `ls` executable.
 
-The `-c`/`-combine` flag in the command line is optional. If `-c` flag is specified, then all process data will be placed into the same `.csv` file.
+The `-c` or `-combine` flag in the command line is optional (both are equivalent flags). If `-c` flag is specified, then all process data will be placed into the same `.csv` file.
 By default (without the `-c` flag), each program's HPC data is saved in a separate `.csv` file.
 
 Running `hpc-profiler` will generate a `run.csv`, which contains the configuration used during the profiling (ex. sampling frequency, total sample time, etc.).
 If profiled with the `-c` flag, HPC data with be combined and saved into one `hpc-data.csv` file.
-Without the `-c` flag, each program data is saved in its own `<program>.csv` file, where `<program>` is the name of the executable that was profiled
+Without the `-c` flag, each program data is saved in its own `<program>.csv` file, where `<program>` is the name of the executable that was profiled.
 
 ## Events to Capture
 Currently `hpc-profiler` only captures PAPI Preset Events. To see all available preset events on your CPU, download and build PAPI, and then run:

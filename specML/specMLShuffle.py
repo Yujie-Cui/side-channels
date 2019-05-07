@@ -62,7 +62,7 @@ train_x = df.drop(columns=drop_data)
 train_y = df['spectre']
 
 # train the network!
-model.fit(train_x, train_y, validation_split=0.2, epochs=30, callbacks=[early_stopping_monitor])
+model.fit(train_x, train_y, validation_split=0.1, epochs=30, callbacks=[early_stopping_monitor])
    
 # Read in HPC data from .csv files and test the model
 for csv_file in glob.glob('data/test/*.csv'):
