@@ -5,7 +5,7 @@
 
 #define MAX_CMD_ARGS 256
 //#define SAMPLE_FREQ 100000 // in microseconds ; 100000 microseconds = 100 miliseconds
-#define SAMPLE_FREQ 1000 // in microseconds ; 100000 microseconds = 100 miliseconds
+#define SAMPLE_FREQ 100 // in microseconds ; 100000 microseconds = 100 miliseconds
 //#define TOTAL_SAMPLE_TIME 60000000 // in microseconds ; 6e7 microseconds = 60 seconds
 #define TOTAL_SAMPLE_TIME 6000000 // in microseconds ; 6e7 microseconds = 60 seconds
 #define MAX_SAMPLES (TOTAL_SAMPLE_TIME / SAMPLE_FREQ) // 100 miliseconds frequency and 60 second sample time = 600 samples
