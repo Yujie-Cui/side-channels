@@ -263,14 +263,20 @@ void create_csv_header(FILE* csv, char combine, profile_t* profiles, int num_pro
         if(ret != PAPI_OK) {
             printf("Failed to convert event %i to string\n", events[i]);
         }
-        if(!combine) fprintf(csv, "%s", eventStr);
+        if(!combine) {
+            fprintf(csv, "%s", eventStr);
+            if(i < NUM_EVENTS - 1) fprintf(csv, ",");
+        }
         else {
             for(int s=0; s<num_profiles; s++) {
                 profile_t* p = &profiles[s];
                 fprintf(csv, "%s-%s", eventStr, basename(p->argv[0]));
+                if(i < NUM_EVENTS - 1) fprintf(csv, ",");
+                else {
+                    if(s < num_profiles - 1) fprintf(csv, ",");
+                }
             }
         }
-        if(i < NUM_EVENTS-1) fprintf(csv, ",");
     }
     fprintf(csv, "\n");
 }
@@ -331,6 +337,10 @@ void create_csv(char combine, profile_t* profiles, int num_profiles) {
                     else fprintf(csv, "%llu", p->values[i][j]);
                     
                     if(j < NUM_EVENTS - 1) fprintf(csv, ",");
+                    else {
+                        if(s < num_profiles - 1) fprintf(csv, ",");
+                    }
+
                 }
             }
             fprintf(csv, "\n");
