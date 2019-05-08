@@ -7,11 +7,11 @@
 //#define SAMPLE_FREQ 100000 // in microseconds ; 100000 microseconds = 100 miliseconds
 #define SAMPLE_FREQ 100 // in microseconds ; 100000 microseconds = 100 miliseconds
 //#define TOTAL_SAMPLE_TIME 60000000 // in microseconds ; 6e7 microseconds = 60 seconds
-#define TOTAL_SAMPLE_TIME 60000 // in microseconds ; 6e7 microseconds = 60 seconds
+#define TOTAL_SAMPLE_TIME 6000000 // in microseconds ; 6e7 microseconds = 60 seconds
 #define MAX_SAMPLES (TOTAL_SAMPLE_TIME / SAMPLE_FREQ) // 100 miliseconds frequency and 60 second sample time = 600 samples
 
-#define NUM_EVENTS 3
-int events[NUM_EVENTS] = {PAPI_TOT_INS, PAPI_L3_TCM, PAPI_L3_TCA};
+#define NUM_EVENTS 6
+int events[NUM_EVENTS] = {PAPI_TOT_INS, PAPI_L3_TCM, PAPI_L3_TCA, PAPI_BR_MSP, PAPI_TOT_CYC, PAPI_L2_TCM};
 
 // holds HPC data for each thread
 typedef struct profile_t {

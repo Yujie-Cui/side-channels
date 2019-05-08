@@ -98,6 +98,7 @@ int main(int argc, char* argv[]) {
                 pause(); // wait until events are attached 
                 ret = execve(p->argv[0], p->argv, NULL); // execute command line args
                 printf("Should never arrive here... execve() error occurred.\n");
+                continue;
             } else { // parent process ; responsible for attaching HPC events to process
                 
                 // attach events to forked process

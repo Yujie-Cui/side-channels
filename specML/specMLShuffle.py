@@ -10,7 +10,7 @@ import pandas as pd
 import numpy as np
 
 # Inputs to the neural network
-inputs = ['PAPI_TOT_INS', 'PAPI_L3_TCM', 'PAPI_L3_TCA']
+inputs = ['PAPI_TOT_INS', 'PAPI_L3_TCM', 'PAPI_L3_TCA', 'PAPI_BR_MSP', 'PAPI_TOT_CYC', 'PAPI_L2_TCM']
 
 # Build neural network
 model = Sequential()
@@ -62,7 +62,7 @@ train_x = df.drop(columns=drop_data)
 train_y = df['spectre']
 
 # train the network!
-model.fit(train_x, train_y, validation_split=0.1, epochs=30, callbacks=[early_stopping_monitor])
+model.fit(train_x, train_y, validation_split=0.2, epochs=30, callbacks=[early_stopping_monitor])
    
 # Read in HPC data from .csv files and test the model
 for csv_file in glob.glob('data/test/*.csv'):

@@ -17,8 +17,9 @@ model = Sequential()
 num_inputs = len(inputs)
 
 # Add model layers
-model.add( Dense(10, activation='relu', input_shape=(num_inputs,)) )
+model.add( Dense(16, activation='relu', input_shape=(num_inputs,)) )
 model.add( Dense(32, activation='relu') )
+model.add( Dense(64, activation='relu') )
 model.add( Dense(1, activation='sigmoid') )
 
 # Compile model
